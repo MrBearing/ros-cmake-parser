@@ -10,7 +10,7 @@ use syn::{
 
 /// A derive macros for parsing CMake tokens to Rust structures and enums.
 ///
-/// Requires dependency to `cmake-parser` crate.
+/// Requires dependency to `ros-cmake-parser` crate.
 #[proc_macro_derive(CMake, attributes(cmake))]
 #[proc_macro_error]
 pub fn cmake_derive(input: TokenStream) -> TokenStream {
