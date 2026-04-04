@@ -30,31 +30,20 @@ jobs:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
         run: cargo publish
 
-      - name: Read derive crate version
-        id: derive_version
-        working-directory: derive
-        run: echo "version=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[0].version')" >> "$GITHUB_OUTPUT"
-
-      - name: Wait for crates.io index to include derive crate version
-        env:
-          EXPECTED_VERSION: ${{ steps.derive_version.outputs.version }}
+      - name: Wait until library crate resolves on publish dry-run
+        working-directory: lib
         run: |
-          set -euo pipefail
+          set -uo pipefail
           for attempt in $(seq 1 40); do
-            response=$(curl -fsSL https://crates.io/api/v1/crates/ros-cmake-parser-derive)
-            if echo "$response" | jq -e --arg version "$EXPECTED_VERSION" '.versions[].num == $version' >/dev/null; then
-              echo "ros-cmake-parser-derive $EXPECTED_VERSION is now visible on crates.io"
+            if cargo publish --dry-run; then
+              echo "Library crate is ready to publish"
               exit 0
             fi
-            echo "Waiting for ros-cmake-parser-derive $EXPECTED_VERSION to appear on crates.io (attempt ${attempt}/40)"
+            echo "Waiting for derive crate version to become resolvable (attempt ${attempt}/40)"
             sleep 15
           done
-          echo "Timed out waiting for ros-cmake-parser-derive $EXPECTED_VERSION to appear on crates.io" >&2
+          echo "Timed out waiting for library crate dry-run to succeed" >&2
           exit 1
-
-      - name: Dry run publish library crate
-        working-directory: lib
-        run: cargo publish --dry-run
 
       - name: Publish library crate
         working-directory: lib
