@@ -24,6 +24,10 @@ jobs:
         working-directory: derive
         run: cargo publish --dry-run
 
+      - name: Preflight library packaging
+        working-directory: lib
+        run: cargo package --allow-dirty
+
       - name: Publish derive crate
         working-directory: derive
         env:
